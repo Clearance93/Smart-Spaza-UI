@@ -123,7 +123,15 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
                 Signed in as {{ email() || 'shop owner' }} -
                 {{ products().length }} products loaded
               </p>
-              <p class="text-xs text-dark-400 mt-1"> {{ engineLabel() }} - camera sleeps after 2 minutes without a scan</p>
+              <p class="text-xs text-dark-400 mt-1">
+                @if (canScan()) {
+                  {{ engineLabel() }} · camera sleeps after 2 minutes without a scan
+                } @else if (!secureContext()) {
+                  Camera needs HTTPS · use 📷 Photo or manual entry
+                } @else {
+                  No camera on this device · use 📷 Photo or manual entry
+                }
+              </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button (click)="openAdd()"
@@ -188,11 +196,17 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
               }
 
               @if (!canScan()) {
-                <div class="absolute inset-0 flex flex-col items-center justify-center text-center gap-2 bg-dark-950/90 px-6">
-                  <div class="text-4xl"></div>
-                  <p class="text-dark-300 text-sm">
-                    Camera scanning isn't available in this browser. Use the manual entry below.
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center gap-3 bg-dark-950/90 px-6">
+                  <div class="text-4xl">📵</div>
+                  <p class="text-dark-200 text-sm max-w-sm">
+                    {{ secureContext()
+                      ? 'No camera was found on this device. Take a photo of the barcode instead.'
+                      : 'The camera needs a secure (HTTPS) page. Take a photo of the barcode instead — it works here.' }}
                   </p>
+                  <button type="button" (click)="photoInput()?.nativeElement?.click()"
+                    class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
+                    📷 Take / upload a photo
+                  </button>
                 </div>
               }
             </div>
@@ -228,6 +242,13 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
                     class="text-sm font-semibold px-4 py-2.5 rounded-xl bg-dark-900 text-white hover:bg-dark-800 disabled:opacity-60 transition-colors">
                     {{ looking() ? '...' : 'Add' }}
                   </button>
+                  <button type="button" (click)="photoInput()?.nativeElement?.click()"
+                    title="Read a barcode from a photo (works over HTTP)"
+                    class="text-sm font-semibold px-4 py-2.5 rounded-xl border border-dark-200 bg-white text-dark-700 hover:bg-dark-50 transition-colors">
+                    📷 Photo
+                  </button>
+                  <input #photoFile type="file" accept="image/*" capture="environment"
+                    class="hidden" (change)="onPhotoSelected($event)" />
                 </div>
               </div>
             </div>
@@ -648,6 +669,10 @@ export class ScannerComponent implements OnDestroy {
   private session = inject(ScannerSessionStore);
 
   videoElement = viewChild<ElementRef<HTMLVideoElement>>('video');
+  photoInput = viewChild<ElementRef<HTMLInputElement>>('photoFile');
+
+  /** False on plain-HTTP pages, where browsers block getUserMedia. */
+  secureContext = signal(true);
 
   stage = signal<Stage>('scan');
   email = signal('');
@@ -736,6 +761,7 @@ export class ScannerComponent implements OnDestroy {
 
   private detector: BarcodeDetectorLike | null = null;
   private zxing: BrowserMultiFormatReader | null = null;
+  private photoReader: BrowserMultiFormatReader | null = null;
   private canvas: HTMLCanvasElement | null = null;
   private stream: MediaStream | null = null;
   private rafId = 0;
@@ -751,6 +777,8 @@ export class ScannerComponent implements OnDestroy {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
+      this.secureContext.set(window.isSecureContext !== false);
+
       const hasCamera = !!navigator.mediaDevices?.getUserMedia;
       const hasDetector =
         typeof (window as unknown as { BarcodeDetector?: unknown }).BarcodeDetector === 'function';
@@ -1158,6 +1186,44 @@ export class ScannerComponent implements OnDestroy {
     if (!barcode) return;
     this.addByBarcode(barcode);
     this.manualBarcode.set('');
+  }
+
+  /**
+   * Reads a barcode from a photo. Works on plain-HTTP pages where the live camera
+   * API is blocked (mobile opens the camera via capture="environment").
+   */
+  async onPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) return;
+
+    this.error.set(null);
+    this.scanMessage.set('Reading the barcode from the photo…');
+    this.scanFailed.set(false);
+
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+      const reader = (this.photoReader ??= new BrowserMultiFormatReader());
+      reader.possibleFormats = ZXING_FORMATS;
+
+      const result = await reader.decodeFromImageUrl(objectUrl);
+      const text = result?.getText();
+
+      if (!text) {
+        throw new Error('No barcode found.');
+      }
+
+      this.addByBarcode(text);
+    } catch {
+      this.scanMessage.set(
+        'No barcode found in that photo. Fill the frame with the barcode and try again.',
+      );
+      this.scanFailed.set(true);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+      if (input) input.value = '';
+    }
   }
 
   private addByBarcode(barcode: string): void {
