@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AuthService,
@@ -234,6 +234,7 @@ interface RoleOption {
 export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   mode = signal<Mode>('login');
 
@@ -257,7 +258,12 @@ export class LoginComponent implements OnInit {
     { value: 'Driver', label: 'Driver', hint: 'Deliveries', icon: '🚚' },
   ];
 
-  ngOnInit(): void {    const user = this.auth.user();
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('mode') === 'register') {
+      this.mode.set('register');
+    }
+
+    const user = this.auth.user();
     if (user) this.router.navigate([this.auth.homeRoute(user.role)]);
   }
 
