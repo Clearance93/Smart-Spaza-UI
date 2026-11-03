@@ -34,7 +34,7 @@ jobs:
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          lftp -c "set ftp:ssl-allow no; set ftp:passive-mode true; set mirror:parallel-transfer-count 4; open -u '${FTP_USER}','${FTP_PASSWORD}' ${FTP_HOST}; mirror -R --no-perms --no-symlinks --no-remove ./dist/Smart-Spaza-UI/browser /wwwroot/wwwroot"
+          lftp -c "set ftp:ssl-allow no; set ftp:passive-mode true; set mirror:parallel-transfer-count 4; open -u '${FTP_USER}','${FTP_PASSWORD}' ${FTP_HOST}; mirror -R --no-perms --no-symlinks ./dist/Smart-Spaza-UI/browser /wwwroot/wwwroot"
 
       - name: Smoke test
         run: |

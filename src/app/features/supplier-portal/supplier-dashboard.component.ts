@@ -6,7 +6,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { StatusBadgeComponent } from '../../shared/components/status-badge.component';
 import { CardSkeletonComponent } from '../../shared/components/skeleton.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
-import type { Order } from '../../core/models';
+import type { Order, SupplierStats } from '../../core/models';
 
 @Component({
   selector: 'app-supplier-dashboard',
@@ -22,7 +22,7 @@ import type { Order } from '../../core/models';
         </div>
         <div class="flex items-center gap-3">
           <button (click)="dispatchOrders()"
-            class="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-primary-600 hover:from-purple-700 hover:to-primary-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-purple-500/25">
+            class="flex items-center gap-2 bg-gradient-to-r from-primary-600 to-primary-600 hover:from-primary-700 hover:to-primary-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-primary-500/25">
             Dispatch Orders
           </button>
           <button (click)="refreshData()"
@@ -36,26 +36,26 @@ import type { Order } from '../../core/models';
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"><app-card-skeleton [count]="4" /></div>
       } @else {
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-gradient-to-br from-purple-50 to-primary-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
+          <div class="bg-gradient-to-br from-primary-50 to-primary-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <p class="text-xs font-semibold text-dark-500 uppercase tracking-wide">Today's Revenue</p>
                 <p class="text-3xl font-bold text-dark-900 mt-2">R {{ (stats()?.totalRevenue ?? 0) | number:'1.0-0' }}</p>
                 <p class="text-xs text-dark-400 mt-1">R1.2M this month</p>
               </div>
-              <div class="bg-gradient-to-br from-purple-500 to-primary-600 text-white p-3 rounded-xl shadow-lg shadow-purple-500/20">
+              <div class="bg-gradient-to-br from-primary-500 to-primary-600 text-white p-3 rounded-xl shadow-lg shadow-primary-500/20">
                 💰
               </div>
             </div>
           </div>
-          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
+          <div class="bg-gradient-to-br from-primary-50 to-primary-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <p class="text-xs font-semibold text-dark-500 uppercase tracking-wide">Active Deliveries</p>
                 <p class="text-3xl font-bold text-dark-900 mt-2">{{ activeDeliveries() }}</p>
                 <p class="text-xs text-dark-400 mt-1">{{ driversOnRoute() }} drivers on route</p>
               </div>
-              <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-3 rounded-xl shadow-lg shadow-blue-500/20">
+              <div class="bg-gradient-to-br from-primary-500 to-primary-600 text-white p-3 rounded-xl shadow-lg shadow-primary-500/20">
                 🚚
               </div>
             </div>
@@ -72,14 +72,14 @@ import type { Order } from '../../core/models';
               </div>
             </div>
           </div>
-          <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
+          <div class="bg-gradient-to-br from-emerald-50 to-primary-50 rounded-2xl p-5 card-shadow border border-dark-100/50">
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <p class="text-xs font-semibold text-dark-500 uppercase tracking-wide">Completed Today</p>
                 <p class="text-3xl font-bold text-dark-900 mt-2">{{ stats()?.todayOrders ?? 0 }}</p>
                 <p class="text-xs text-dark-400 mt-1">94% satisfaction</p>
               </div>
-              <div class="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-3 rounded-xl shadow-lg shadow-emerald-500/20">
+              <div class="bg-gradient-to-br from-emerald-500 to-primary-600 text-white p-3 rounded-xl shadow-lg shadow-emerald-500/20">
                 ✅
               </div>
             </div>
@@ -97,11 +97,11 @@ import type { Order } from '../../core/models';
             </div>
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                <div class="w-3 h-3 rounded-full bg-primary-500"></div>
                 <span class="text-xs text-dark-500">Revenue</span>
               </div>
               <div class="flex items-center gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-cyan-500"></div>
+                <div class="w-3 h-3 rounded-full bg-primary-500"></div>
                 <span class="text-xs text-dark-500">Orders</span>
               </div>
             </div>
@@ -110,9 +110,9 @@ import type { Order } from '../../core/models';
             @for (d of revenueData; track d.month) {
               <div class="flex-1 flex flex-col items-center gap-1 h-full justify-end">
                 <div class="w-full flex flex-col items-center gap-1" style="height: 100%">
-                  <div class="w-full bg-gradient-to-t from-purple-500 to-purple-300 rounded-t-md"
+                  <div class="w-full bg-gradient-to-t from-primary-500 to-primary-300 rounded-t-md"
                     [style.height.%]="(d.revenue / maxRevenue * 100)"></div>
-                  <div class="w-full bg-cyan-400 rounded-md"
+                  <div class="w-full bg-primary-400 rounded-md"
                     [style.height.%]="(d.orders / maxOrders * 100)"></div>
                 </div>
                 <span class="text-xs text-dark-400">{{ d.month }}</span>
@@ -125,7 +125,7 @@ import type { Order } from '../../core/models';
           <h3 class="font-bold text-dark-900 mb-4">Sales by Category</h3>
           <div class="h-40 flex items-center justify-center">
             <div class="relative w-40 h-40 rounded-full"
-              [style.background]="'conic-gradient(#a855f7 0% 35%, #3b82f6 35% 60%, #f59e0b 60% 80%, #10b981 80% 100%)'">
+              [style.background]="'conic-gradient(#15b372 0% 35%, #38ce8c 35% 60%, #f59e0b 60% 80%, #10b981 80% 100%)'">
               <div class="absolute inset-8 bg-white rounded-full flex items-center justify-center">
                 <span class="text-xs font-bold text-dark-700">Categories</span>
               </div>
@@ -165,6 +165,7 @@ import type { Order } from '../../core/models';
                   <th class="text-left px-5 py-3 text-xs font-semibold text-dark-500 uppercase">Amount</th>
                   <th class="text-center px-5 py-3 text-xs font-semibold text-dark-500 uppercase">Status</th>
                   <th class="text-left px-5 py-3 text-xs font-semibold text-dark-500 uppercase">Time</th>
+                  <th class="text-right px-5 py-3 text-xs font-semibold text-dark-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-dark-50">
@@ -172,19 +173,31 @@ import type { Order } from '../../core/models';
                   <tr class="hover:bg-dark-50/50 transition-colors">
                     <td class="px-5 py-3.5">
                       <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                          <span class="text-purple-600 text-xs">📋</span>
+                        <div class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
+                          <span class="text-primary-600 text-xs">📋</span>
                         </div>
                         <span class="text-sm font-semibold text-dark-800">{{ order.orderNumber }}</span>
                       </div>
                     </td>
-                    <td class="px-5 py-3.5 text-sm text-dark-700 font-medium">—</td>
-                    <td class="px-5 py-3.5 text-sm text-dark-500">—</td>
+                    <td class="px-5 py-3.5 text-sm text-dark-700 font-medium">{{ order.retailer ?? '—' }}</td>
+                    <td class="px-5 py-3.5 text-sm text-dark-500">{{ order.township ?? '—' }}</td>
                     <td class="px-5 py-3.5 text-sm font-bold text-dark-800">R {{ order.total | number:'1.2-2' }}</td>
                     <td class="px-5 py-3.5 text-center">
                       <app-status-badge [status]="order.status" />
                     </td>
                     <td class="px-5 py-3.5 text-xs text-dark-500">{{ order.createdAt | date:'d MMM yyyy' }}</td>
+                    <td class="px-5 py-3.5">
+                      <div class="flex items-center justify-end gap-2">
+                        <button (click)="confirmOrder(order.id)"
+                          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
+                          Confirm
+                        </button>
+                        <button (click)="rejectOrder(order.id)"
+                          class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors">
+                          Reject
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -210,13 +223,13 @@ export class SupplierDashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private ordersService = inject(OrdersService);
 
-  stats = signal<any>(null);
+  stats = signal<SupplierStats | null>(null);
   pendingOrders = signal<Order[]>([]);
   statsLoading = signal(true);
   ordersLoading = signal(true);
 
-  activeDeliveries = computed(() => this.stats()?.pendingOrders ?? 0);
-  driversOnRoute = computed(() => this.stats()?.pendingOrders ?? 0);
+  activeDeliveries = computed(() => this.stats()?.activeDeliveries ?? 0);
+  driversOnRoute = computed(() => this.stats()?.activeDrivers ?? 0);
 
   revenueData = [
     { month: 'Jan', revenue: 85000, orders: 1200 },
@@ -228,8 +241,8 @@ export class SupplierDashboardComponent implements OnInit {
   ];
 
   categoryData = [
-    { name: 'Grains', value: 35, color: '#a855f7' },
-    { name: 'Dairy', value: 25, color: '#3b82f6' },
+    { name: 'Grains', value: 35, color: '#15b372' },
+    { name: 'Dairy', value: 25, color: '#38ce8c' },
     { name: 'Snacks', value: 20, color: '#f59e0b' },
     { name: 'Beverages', value: 20, color: '#10b981' },
   ];
@@ -240,6 +253,7 @@ export class SupplierDashboardComponent implements OnInit {
   quickLinks = [
     { icon: '📦', label: 'My Products', route: '/supplier/products' },
     { icon: '📋', label: 'All Orders', route: '/supplier/orders' },
+    { icon: '📷', label: 'Scan Code', route: '/scanner' },
     { icon: '📊', label: 'Analytics', route: '/supplier/analytics' },
   ];
 
