@@ -1,0 +1,2 @@
+- Wants code verified as production-ready before moving on, and expects testing to be part of that verification (run the build/test suite rather than just asserting readiness). Confidence: 0.6
+- Cares that features actually work end-to-end/functionally, not just that they compile or are scaffolded (asks for the capability to be "working", not merely present) — including that data flows through to real persistence/backend rather than stopping at the UI (e.g. asks whether scanned items can actually be passed into a database). Confidence: 0.6

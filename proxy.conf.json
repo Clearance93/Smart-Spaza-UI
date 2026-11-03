@@ -1,0 +1,14 @@
+{
+  "/api": {
+    "target": "http://smartspaza-api.runasp.net",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  },
+  "/swagger": {
+    "target": "http://smartspaza-api.runasp.net",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  }
+}

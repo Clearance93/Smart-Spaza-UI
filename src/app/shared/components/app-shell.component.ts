@@ -1,5 +1,13 @@
 import { Component, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
+import { filter, map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 
 interface NavItem {
@@ -15,36 +23,36 @@ interface NavItem {
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-<div class="flex h-screen overflow-hidden bg-slate-950">
+<div class="flex h-screen overflow-hidden bg-dark-950">
       <!-- Sidebar -->
       <aside
-        class="static lg:static fixed inset-y-0 left-0 z-50 flex flex-col bg-gradient-to-b from-[#1a1f36] to-[#0f172a] transition-all duration-300"
+        class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col overflow-x-hidden bg-gradient-to-b from-[#0d1510] to-[#080e0b] transition-all duration-300"
         [class]="sidebarOpen() ? 'translate-x-0 w-72' : '-translate-x-full w-16'">
 
         <!-- Logo -->
         <div class="flex items-center justify-between h-16 px-6 border-b border-white/5 flex-shrink-0">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-primary-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg shadow-primary-500/20">
               <span class="text-white font-bold">SS</span>
             </div>
             @if (sidebarOpen()) {
               <div>
                 <span class="block text-white font-bold text-lg leading-tight">Smart Spaza</span>
-                <span class="block text-primary-300 text-xs font-medium">Supplier Portal</span>
+                <span class="block text-primary-300 text-xs font-medium">{{ portalLabel() }}</span>
               </div>
             }
           </div>
-          <button (click)="toggleSidebar()" class="lg:hidden text-dark-400 hover:text-white">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button (click)="toggleSidebar()" class="lg:hidden text-dark-400 hover:text-white" aria-label="Close sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
         </div>
 
         <!-- User card -->
-        <div class="px-4 py-5 mx-3 mt-4 rounded-xl bg-gradient-to-br from-purple-900/40 to-primary-900/30 border border-primary-700/20">
+        <div class="px-4 py-5 mx-3 mt-4 rounded-xl bg-gradient-to-br from-primary-900/40 to-primary-900/30 border border-primary-700/20">
           <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold shadow-lg">
               {{ userInitials() }}
             </div>
             @if (sidebarOpen()) {
@@ -61,10 +69,10 @@ interface NavItem {
         <!-- Nav -->
         <nav class="mt-6 px-3 space-y-1">
           @for (item of visibleNavItems(); track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="bg-gradient-to-r from-purple-500/90 to-primary-600/90 text-white shadow-lg shadow-purple-500/25"
+            <a [routerLink]="item.route" routerLinkActive="bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25"
               [routerLinkActiveOptions]="{ exact: item.route.endsWith('/dashboard') }"
               class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all group"
-              [class]="isActive(item.route) ? 'bg-gradient-to-r from-purple-500/90 to-primary-600/90 text-white shadow-lg shadow-purple-500/25' : 'text-dark-300 hover:bg-white/5 hover:text-white'">
+              [class]="isActive(item.route) ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25' : 'text-dark-300 hover:bg-white/5 hover:text-white'">
               <div class="flex items-center gap-3">
                 <span class="text-lg flex-shrink-0">{{ item.icon }}</span>
                 @if (sidebarOpen()) {
@@ -90,34 +98,60 @@ interface NavItem {
       <div class="flex flex-col flex-1 min-w-0 transition-all duration-300 overflow-hidden">
 
         <!-- Top bar -->
-        <header class="h-16 border-b flex items-center px-4 gap-4 flex-shrink-0 z-30 bg-slate-900 border-slate-800">
+        <header class="h-16 border-b flex items-center px-4 gap-4 flex-shrink-0 z-30 bg-white border-dark-200">
           <button (click)="toggleSidebar()"
-            class="p-2 rounded-lg transition-colors"
-            [class]="isDriver() ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100'">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="p-2 rounded-lg text-dark-500 hover:bg-dark-100 hover:text-dark-900 transition-colors"
+            aria-label="Toggle sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
 
           <div class="flex-1"></div>
 
-          <!-- Notifications -->
-          <button class="relative p-2 rounded-lg transition-colors"
-            [class]="isDriver() ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100'">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-          </button>
+          @if (isDemoData()) {
+            <span
+              class="hidden sm:inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800"
+              title="This screen still uses in-memory demo data, not the Smart Spaza database.">
+              Demo data
+            </span>
+          }
 
-          <!-- User avatar -->
-          <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <span class="text-white text-xs font-bold">{{ userInitials() }}</span>
+          <!-- Notifications -->
+          @if (notificationsRoute()) {
+            <a [routerLink]="notificationsRoute()"
+              class="relative p-2 rounded-lg text-dark-500 hover:bg-dark-100 hover:text-dark-900 transition-colors"
+              title="Notifications"
+              aria-label="Notifications">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+            </a>
+          } @else {
+            <button class="relative p-2 rounded-lg text-dark-500 hover:bg-dark-100 hover:text-dark-900 transition-colors" title="Notifications" aria-label="Notifications">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+            </button>
+          }
+
+          <!-- User -->
+          <div class="hidden sm:flex items-center gap-2.5 pl-3 border-l border-dark-200">
+            <div class="text-right leading-tight">
+              <p class="text-xs font-semibold text-dark-900">{{ user()?.name }}</p>
+              <p class="text-[11px] text-dark-400">{{ roleLabel() }}</p>
+            </div>
+            <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <span class="text-white text-xs font-bold">{{ userInitials() }}</span>
+            </div>
           </div>
         </header>
 
         <!-- Page content -->
-        <main class="flex-1 overflow-y-auto bg-slate-950">
+        <main class="flex-1 overflow-y-auto bg-dark-50">
           <router-outlet />
         </main>
       </div>
@@ -128,10 +162,39 @@ export class AppShellComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  sidebarOpen = signal(true);
+  sidebarOpen = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1024);
   user = this.auth.user;
-  isDriver = this.auth.isDriver;
-  isSupplier = this.auth.isSupplier;
+
+  private currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Screens still backed by in-memory demo data instead of the API. */
+  isDemoData = computed(
+    () => !['/scanner', '/inventory', '/login'].some((path) => this.currentUrl().startsWith(path)),
+  );
+
+  portalLabel = computed(() => {
+    const map: Record<string, string> = {
+      RETAILER: 'Retailer Portal',
+      SUPPLIER: 'Supplier Portal',
+      ADMIN: 'Admin Console',
+      DRIVER: 'Driver Portal',
+    };
+    return map[this.auth.userRole() ?? ''] ?? 'Portal';
+  });
+
+  notificationsRoute = computed(() => {
+    const map: Record<string, string> = {
+      DRIVER: '/driver/notifications',
+      RETAILER: '/notifications',
+    };
+    return map[this.auth.userRole() ?? ''] ?? null;
+  });
 
   userInitials = computed(() => {
     const name = this.auth.user()?.name ?? '';
@@ -150,10 +213,12 @@ export class AppShellComponent {
 
   private allNavItems: NavItem[] = [
     { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER'] },
+    { label: 'Orders', icon: '📋', route: '/orders', roles: ['RETAILER'] },
+    { label: 'Live Tracking', icon: '📍', route: '/tracking', roles: ['RETAILER'] },
     { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER'] },
     { label: 'Suppliers', icon: '🤝', route: '/suppliers', roles: ['RETAILER'] },
-    { label: 'Orders', icon: '📋', route: '/orders', roles: ['RETAILER'] },
     { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER'] },
+    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER'] },
     { label: 'Settings', icon: '⚙️', route: '/settings', roles: ['RETAILER'] },
     // Supplier
     { label: 'Dashboard', icon: '🏠', route: '/supplier/dashboard', roles: ['SUPPLIER'] },
@@ -161,6 +226,8 @@ export class AppShellComponent {
     { label: 'My Products', icon: '📦', route: '/supplier/products', roles: ['SUPPLIER'] },
     { label: 'Orders', icon: '📋', route: '/supplier/orders', roles: ['SUPPLIER'] },
     { label: 'Analytics', icon: '📊', route: '/supplier/analytics', roles: ['SUPPLIER'] },
+    // Shared
+    { label: 'Scan Code', icon: '📷', route: '/scanner', roles: ['RETAILER', 'SUPPLIER'] },
     // Admin
     { label: 'Dashboard', icon: '🏠', route: '/admin/dashboard', roles: ['ADMIN'] },
     { label: 'Retailers', icon: '🏪', route: '/admin/retailers', roles: ['ADMIN'] },
@@ -172,6 +239,7 @@ export class AppShellComponent {
     { label: 'Navigation', icon: '🧭', route: '/driver/navigation', roles: ['DRIVER'] },
     { label: 'History', icon: '🕓', route: '/driver/history', roles: ['DRIVER'] },
     { label: 'Earnings', icon: '💰', route: '/driver/earnings', roles: ['DRIVER'] },
+    { label: 'Notifications', icon: '🔔', route: '/driver/notifications', roles: ['DRIVER'] },
     { label: 'Settings', icon: '⚙️', route: '/driver/settings', roles: ['DRIVER'] },
   ];
 
