@@ -130,13 +130,9 @@ export class AuthService {
     return this._user()?.role;
   }
 
-  homeRoute(role: User['role']): string {
-    return {
-      SUPPLIER: '/supplier/dashboard',
-      RETAILER: '/dashboard',
-      DRIVER: '/driver/dashboard',
-      ADMIN: '/admin/dashboard',
-    }[role];
+  homeRoute(_role: User['role']): string {
+    // Every portal shares the live, user-scoped dashboard.
+    return '/dashboard';
   }
 
   roleLabel(): string {

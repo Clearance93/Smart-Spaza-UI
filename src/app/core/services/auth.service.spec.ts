@@ -74,7 +74,7 @@ describe('AuthService', () => {
     });
 
     expect(service.user()?.role).toBe('SUPPLIER');
-    expect(service.homeRoute('SUPPLIER')).toBe('/supplier/dashboard');
+    expect(service.homeRoute('SUPPLIER')).toBe('/dashboard');
   });
 
   it('should clear the session and redirect on logout', () => {

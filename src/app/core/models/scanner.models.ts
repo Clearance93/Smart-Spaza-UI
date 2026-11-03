@@ -1,5 +1,3 @@
-import { Product } from '../../core/models';
-
 export interface ScannedProduct {
   productId: string;
   barcode: string | null;
@@ -26,8 +24,4 @@ export interface LoginResponse {
   email?: string | null;
   roles?: string[];
   roleUserId?: string | null;
-}
-
-export interface CatalogProduct extends Product {
-  barcode: string | null;
 }

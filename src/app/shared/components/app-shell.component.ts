@@ -1,13 +1,5 @@
 import { Component, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet,
-} from '@angular/router';
-import { filter, map } from 'rxjs/operators';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 interface NavItem {
@@ -109,14 +101,6 @@ interface NavItem {
 
           <div class="flex-1"></div>
 
-          @if (isDemoData()) {
-            <span
-              class="hidden sm:inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800"
-              title="This screen still uses in-memory demo data, not the Smart Spaza database.">
-              Demo data
-            </span>
-          }
-
           <!-- Notifications -->
           @if (notificationsRoute()) {
             <a [routerLink]="notificationsRoute()"
@@ -165,19 +149,6 @@ export class AppShellComponent {
   sidebarOpen = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1024);
   user = this.auth.user;
 
-  private currentUrl = toSignal(
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects),
-    ),
-    { initialValue: this.router.url },
-  );
-
-  /** Screens still backed by in-memory demo data instead of the API. */
-  isDemoData = computed(
-    () => !['/scanner', '/inventory', '/login'].some((path) => this.currentUrl().startsWith(path)),
-  );
-
   portalLabel = computed(() => {
     const map: Record<string, string> = {
       RETAILER: 'Retailer Portal',
@@ -212,35 +183,9 @@ export class AppShellComponent {
   }
 
   private allNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER'] },
-    { label: 'Orders', icon: '📋', route: '/orders', roles: ['RETAILER'] },
-    { label: 'Live Tracking', icon: '📍', route: '/tracking', roles: ['RETAILER'] },
-    { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER'] },
-    { label: 'Suppliers', icon: '🤝', route: '/suppliers', roles: ['RETAILER'] },
-    { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER'] },
-    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER'] },
-    { label: 'Settings', icon: '⚙️', route: '/settings', roles: ['RETAILER'] },
-    // Supplier
-    { label: 'Dashboard', icon: '🏠', route: '/supplier/dashboard', roles: ['SUPPLIER'] },
-    { label: 'Command Center', icon: '⚡', route: '/supplier/command-center', roles: ['SUPPLIER'] },
-    { label: 'My Products', icon: '📦', route: '/supplier/products', roles: ['SUPPLIER'] },
-    { label: 'Orders', icon: '📋', route: '/supplier/orders', roles: ['SUPPLIER'] },
-    { label: 'Analytics', icon: '📊', route: '/supplier/analytics', roles: ['SUPPLIER'] },
-    // Shared
+    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
+    { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER', 'SUPPLIER'] },
     { label: 'Scan Code', icon: '📷', route: '/scanner', roles: ['RETAILER', 'SUPPLIER'] },
-    // Admin
-    { label: 'Dashboard', icon: '🏠', route: '/admin/dashboard', roles: ['ADMIN'] },
-    { label: 'Retailers', icon: '🏪', route: '/admin/retailers', roles: ['ADMIN'] },
-    { label: 'Suppliers', icon: '🤝', route: '/admin/suppliers', roles: ['ADMIN'] },
-    { label: 'Orders', icon: '📋', route: '/admin/orders', roles: ['ADMIN'] },
-    // Driver
-    { label: 'Dashboard', icon: '🚚', route: '/driver/dashboard', roles: ['DRIVER'] },
-    { label: 'Deliveries', icon: '📦', route: '/driver/deliveries', roles: ['DRIVER'] },
-    { label: 'Navigation', icon: '🧭', route: '/driver/navigation', roles: ['DRIVER'] },
-    { label: 'History', icon: '🕓', route: '/driver/history', roles: ['DRIVER'] },
-    { label: 'Earnings', icon: '💰', route: '/driver/earnings', roles: ['DRIVER'] },
-    { label: 'Notifications', icon: '🔔', route: '/driver/notifications', roles: ['DRIVER'] },
-    { label: 'Settings', icon: '⚙️', route: '/driver/settings', roles: ['DRIVER'] },
   ];
 
   visibleNavItems = computed(() => {
