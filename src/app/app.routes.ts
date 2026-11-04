@@ -162,6 +162,63 @@ export const routes: Routes = [
 
       { path: 'supplier', redirectTo: 'supplier/dashboard', pathMatch: 'full' },
 
+      // Driver portal.
+      {
+        path: 'driver/dashboard',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-dashboard.component').then(
+            (m) => m.DriverDashboardComponent,
+          ),
+      },
+      {
+        path: 'driver/deliveries',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-deliveries.component').then(
+            (m) => m.DriverDeliveriesComponent,
+          ),
+      },
+      {
+        path: 'driver/navigation',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-navigation.component').then(
+            (m) => m.DriverNavigationComponent,
+          ),
+      },
+      {
+        path: 'driver/history',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-history.component').then(
+            (m) => m.DriverHistoryComponent,
+          ),
+      },
+      {
+        path: 'driver/performance',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-performance.component').then(
+            (m) => m.DriverPerformanceComponent,
+          ),
+      },
+      {
+        path: 'driver/notifications',
+        canActivate: [roleGuard],
+        data: { roles: ['DRIVER'] },
+        loadComponent: () =>
+          import('./features/driver-portal/driver-notifications.component').then(
+            (m) => m.DriverNotificationsComponent,
+          ),
+      },
+      { path: 'driver', redirectTo: 'driver/dashboard', pathMatch: 'full' },
+
       { path: '**', component: NotFoundComponent },
     ],
   },

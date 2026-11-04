@@ -11,6 +11,10 @@ interface NavItem {
   supplierRoute?: string;
   /** Label used instead of `label` for suppliers. */
   supplierLabel?: string;
+  /** Route used instead of `route` for drivers. */
+  driverRoute?: string;
+  /** Label used instead of `label` for drivers. */
+  driverLabel?: string;
 }
 
 @Component({
@@ -191,7 +195,7 @@ export class AppShellComponent implements OnInit, OnDestroy {
 
   notificationsRoute = computed(() => {
     const map: Record<string, string> = {
-      DRIVER: '/notifications',
+      DRIVER: '/driver/notifications',
       RETAILER: '/notifications',
       SUPPLIER: '/supplier/notifications',
     };
@@ -214,25 +218,35 @@ export class AppShellComponent implements OnInit, OnDestroy {
   }
 
   private allNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/dashboard' },
+    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/dashboard', driverRoute: '/driver/dashboard' },
     { label: 'Orders', icon: '🧾', route: '/orders', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/orders' },
     { label: 'Live Tracking', icon: '🛰️', route: '/tracking', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/fleet', supplierLabel: 'Fleet Tracking' },
+    { label: 'Deliveries', icon: '📦', route: '/driver/deliveries', roles: ['DRIVER'] },
+    { label: 'Navigation', icon: '🧭', route: '/driver/navigation', roles: ['DRIVER'] },
+    { label: 'History', icon: '🗂️', route: '/driver/history', roles: ['DRIVER'] },
+    { label: 'Performance', icon: '📈', route: '/driver/performance', roles: ['DRIVER'] },
     { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER', 'SUPPLIER'] },
     { label: 'Suppliers', icon: '🏭', route: '/suppliers', roles: ['RETAILER'] },
     { label: 'Retailers', icon: '🏪', route: '/supplier/retailers', roles: ['SUPPLIER'] },
     { label: 'Drivers', icon: '🧑‍✈️', route: '/supplier/drivers', roles: ['SUPPLIER'] },
     { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/analytics' },
-    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/notifications' },
+    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/notifications', driverRoute: '/driver/notifications' },
     { label: 'Scan Code', icon: '📷', route: '/scanner', roles: ['RETAILER', 'SUPPLIER'] },
     { label: 'Settings', icon: '⚙️', route: '/settings', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
   ];
 
   routeFor(item: NavItem): string {
-    return this.auth.isSupplier() ? item.supplierRoute ?? item.route : item.route;
+    const role = this.auth.userRole();
+    if (role === 'SUPPLIER') return item.supplierRoute ?? item.route;
+    if (role === 'DRIVER') return item.driverRoute ?? item.route;
+    return item.route;
   }
 
   labelFor(item: NavItem): string {
-    return this.auth.isSupplier() ? item.supplierLabel ?? item.label : item.label;
+    const role = this.auth.userRole();
+    if (role === 'SUPPLIER') return item.supplierLabel ?? item.label;
+    if (role === 'DRIVER') return item.driverLabel ?? item.label;
+    return item.label;
   }
 
   visibleNavItems = computed(() => {

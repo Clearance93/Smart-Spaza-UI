@@ -131,8 +131,10 @@ export class AuthService {
   }
 
   homeRoute(role: User['role']): string {
-    // Each portal has its own live dashboard; both are scoped by the JWT.
-    return role === 'SUPPLIER' ? '/supplier/dashboard' : '/dashboard';
+    // Each portal has its own live dashboard; all are scoped by the JWT.
+    if (role === 'SUPPLIER') return '/supplier/dashboard';
+    if (role === 'DRIVER') return '/driver/dashboard';
+    return '/dashboard';
   }
 
   roleLabel(): string {

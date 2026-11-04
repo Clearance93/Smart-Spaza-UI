@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, tap } from 'rxjs';
+import { Observable, forkJoin, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { ShopOrder, ShopSupplier } from '../models/retailer-orders.models';
 
@@ -21,6 +21,7 @@ export class RetailerOrdersService {
   private _loading = signal(false);
   private _loaded = signal(false);
   private _error = signal<string | null>(null);
+  private loadingSince = 0;
 
   readonly orders = this._orders.asReadonly();
   readonly suppliers = this._suppliers.asReadonly();
@@ -61,16 +62,20 @@ export class RetailerOrdersService {
 
   /** Loads both lists once; pass true to force a refresh. */
   load(force = false): void {
-    if (this._loading()) return;
+    // A request aborted by a navigation can leave the loading flag set forever.
+    // Treat a stale flag as not loading so Refresh always recovers.
+    const stale = this._loading() && Date.now() - this.loadingSince > 10000;
+    if (this._loading() && !stale) return;
     if (this._loaded() && !force) return;
 
+    this.loadingSince = Date.now();
     this._loading.set(true);
     this._error.set(null);
 
     forkJoin({
       orders: this.http.get<ShopOrder[]>(`${this.base}/Delivery/shopOrders`),
       suppliers: this.http.get<ShopSupplier[]>(`${this.base}/Delivery/shopSuppliers`),
-    }).subscribe({
+    }).pipe(timeout(20000)).subscribe({
       next: ({ orders, suppliers }) => {
         this._orders.set(orders ?? []);
         this._suppliers.set(suppliers ?? []);
