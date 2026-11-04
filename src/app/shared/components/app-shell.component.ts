@@ -7,6 +7,10 @@ interface NavItem {
   icon: string;
   route: string;
   roles: string[];
+  /** Route used instead of `route` for suppliers. */
+  supplierRoute?: string;
+  /** Label used instead of `label` for suppliers. */
+  supplierLabel?: string;
 }
 
 @Component({
@@ -68,14 +72,14 @@ interface NavItem {
         <!-- Nav -->
         <nav class="mt-6 px-3 space-y-1">
           @for (item of visibleNavItems(); track item.route) {
-            <a [routerLink]="item.route" routerLinkActive="bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25"
-              [routerLinkActiveOptions]="{ exact: item.route.endsWith('/dashboard') }"
+            <a [routerLink]="routeFor(item)" routerLinkActive="bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25"
+              [routerLinkActiveOptions]="{ exact: routeFor(item).endsWith('/dashboard') }"
               class="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all group"
-              [class]="isActive(item.route) ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25' : 'text-dark-300 hover:bg-white/5 hover:text-white'">
+              [class]="isActive(routeFor(item)) ? 'bg-gradient-to-r from-primary-500/90 to-primary-600/90 text-white shadow-lg shadow-primary-500/25' : 'text-dark-300 hover:bg-white/5 hover:text-white'">
               <div class="flex items-center gap-3">
                 <span class="text-lg flex-shrink-0">{{ item.icon }}</span>
                 @if (sidebarOpen()) {
-                  <span class="text-sm font-medium whitespace-nowrap">{{ item.label }}</span>
+                  <span class="text-sm font-medium whitespace-nowrap">{{ labelFor(item) }}</span>
                 }
               </div>
             </a>
@@ -189,7 +193,7 @@ export class AppShellComponent implements OnInit, OnDestroy {
     const map: Record<string, string> = {
       DRIVER: '/notifications',
       RETAILER: '/notifications',
-      SUPPLIER: '/notifications',
+      SUPPLIER: '/supplier/notifications',
     };
     return map[this.auth.userRole() ?? ''] ?? null;
   });
@@ -210,16 +214,26 @@ export class AppShellComponent implements OnInit, OnDestroy {
   }
 
   private allNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
-    { label: 'Orders', icon: '🧾', route: '/orders', roles: ['RETAILER'] },
-    { label: 'Live Tracking', icon: '🛰️', route: '/tracking', roles: ['RETAILER'] },
+    { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/dashboard' },
+    { label: 'Orders', icon: '🧾', route: '/orders', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/orders' },
+    { label: 'Live Tracking', icon: '🛰️', route: '/tracking', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/fleet', supplierLabel: 'Fleet Tracking' },
     { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER', 'SUPPLIER'] },
     { label: 'Suppliers', icon: '🏭', route: '/suppliers', roles: ['RETAILER'] },
-    { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER'] },
-    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
+    { label: 'Retailers', icon: '🏪', route: '/supplier/retailers', roles: ['SUPPLIER'] },
+    { label: 'Drivers', icon: '🧑‍✈️', route: '/supplier/drivers', roles: ['SUPPLIER'] },
+    { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER', 'SUPPLIER'], supplierRoute: '/supplier/analytics' },
+    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'], supplierRoute: '/supplier/notifications' },
     { label: 'Scan Code', icon: '📷', route: '/scanner', roles: ['RETAILER', 'SUPPLIER'] },
     { label: 'Settings', icon: '⚙️', route: '/settings', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
   ];
+
+  routeFor(item: NavItem): string {
+    return this.auth.isSupplier() ? item.supplierRoute ?? item.route : item.route;
+  }
+
+  labelFor(item: NavItem): string {
+    return this.auth.isSupplier() ? item.supplierLabel ?? item.label : item.label;
+  }
 
   visibleNavItems = computed(() => {
     const role = this.auth.userRole();

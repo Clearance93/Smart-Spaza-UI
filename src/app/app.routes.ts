@@ -95,9 +95,72 @@ export const routes: Routes = [
           import('./features/scanner/scanner.component').then((m) => m.ScannerComponent),
       },
 
-      // Legacy bookmarks from the old supplier portal.
-      { path: 'supplier/dashboard', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'supplier', redirectTo: 'dashboard', pathMatch: 'full' },
+      // Supplier portal (everything scoped to the supplier from the JWT).
+      {
+        path: 'supplier/dashboard',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-dashboard.component').then(
+            (m) => m.SupplierDashboardComponent,
+          ),
+      },
+      {
+        path: 'supplier/orders',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-orders.component').then(
+            (m) => m.SupplierOrdersComponent,
+          ),
+      },
+      {
+        path: 'supplier/fleet',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-fleet.component').then(
+            (m) => m.SupplierFleetComponent,
+          ),
+      },
+      {
+        path: 'supplier/drivers',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-drivers.component').then(
+            (m) => m.SupplierDriversComponent,
+          ),
+      },
+      {
+        path: 'supplier/retailers',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-retailers.component').then(
+            (m) => m.SupplierRetailersComponent,
+          ),
+      },
+      {
+        path: 'supplier/analytics',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-analytics.component').then(
+            (m) => m.SupplierAnalyticsComponent,
+          ),
+      },
+      {
+        path: 'supplier/notifications',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/supplier-portal/supplier-notifications.component').then(
+            (m) => m.SupplierNotificationsComponent,
+          ),
+      },
+
+      { path: 'supplier', redirectTo: 'supplier/dashboard', pathMatch: 'full' },
 
       { path: '**', component: NotFoundComponent },
     ],
