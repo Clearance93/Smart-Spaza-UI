@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, computed, inject, ChangeDetectionStrategy, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -16,10 +16,16 @@ interface NavItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
 <div class="flex h-screen overflow-hidden bg-dark-950">
+      <!-- Mobile backdrop -->
+      @if (sidebarOpen()) {
+        <button type="button" (click)="toggleSidebar()" aria-label="Close sidebar"
+          class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"></button>
+      }
+
       <!-- Sidebar -->
       <aside
         class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col overflow-x-hidden bg-gradient-to-b from-[#0d1510] to-[#080e0b] transition-all duration-300"
-        [class]="sidebarOpen() ? 'translate-x-0 w-72' : '-translate-x-full w-16'">
+        [class]="sidebarOpen() ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0 w-16'">
 
         <!-- Logo -->
         <div class="flex items-center justify-between h-16 px-6 border-b border-white/5 flex-shrink-0">
@@ -34,9 +40,10 @@ interface NavItem {
               </div>
             }
           </div>
-          <button (click)="toggleSidebar()" class="lg:hidden text-dark-400 hover:text-white" aria-label="Close sidebar">
+          <button (click)="toggleSidebar()" class="text-dark-400 hover:text-white" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" class="lg:hidden" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6l-6 6 6 6" class="hidden lg:block" />
             </svg>
           </button>
         </div>
@@ -142,12 +149,31 @@ interface NavItem {
     </div>
   `
 })
-export class AppShellComponent {
+export class AppShellComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  sidebarOpen = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1024);
+  private isDesktop = typeof window === 'undefined' ? true : window.innerWidth >= 1024;
+
+  sidebarOpen = signal(this.isDesktop);
   user = this.auth.user;
+
+  ngOnInit(): void {
+    window.addEventListener('resize', this.handleResize);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.handleResize);
+  }
+
+  private handleResize = (): void => {
+    const desktop = window.innerWidth >= 1024;
+
+    if (desktop !== this.isDesktop) {
+      this.isDesktop = desktop;
+      this.sidebarOpen.set(desktop);
+    }
+  };
 
   portalLabel = computed(() => {
     const map: Record<string, string> = {
