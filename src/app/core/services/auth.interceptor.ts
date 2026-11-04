@@ -148,7 +148,10 @@ function signOutAndFail(router: Router, error: unknown) {
 
   try {
     // Full reload so every in-memory session signal is reset, not just storage.
-    window.location.assign('/login');
+    // Resolve against the app's base href: the platform is served from /app on the
+    // HTTPS host and from / on the .NET host, so a hard-coded '/login' would 404.
+    const loginUrl = new URL('login', document.baseURI).toString();
+    window.location.assign(loginUrl);
   } catch {
     try {
       router.navigate(['/login']);
