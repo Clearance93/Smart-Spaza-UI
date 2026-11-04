@@ -207,6 +207,10 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
                     class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
                     📷 Take / upload a photo
                   </button>
+                  <a href="https://smartspaza.com/app/scanner"
+                    class="text-xs font-semibold text-primary-300 underline underline-offset-2 hover:text-primary-200">
+                    Open the secure site to use this device's camera →
+                  </a>
                 </div>
               }
             </div>
