@@ -19,13 +19,13 @@ interface NavItem {
       <!-- Mobile backdrop -->
       @if (sidebarOpen()) {
         <button type="button" (click)="toggleSidebar()" aria-label="Close sidebar"
-          class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"></button>
+          class="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"></button>
       }
 
       <!-- Sidebar -->
       <aside
-        class="fixed lg:static inset-y-0 left-0 z-50 flex flex-col overflow-x-hidden bg-gradient-to-b from-[#0d1510] to-[#080e0b] transition-all duration-300"
-        [class]="sidebarOpen() ? 'translate-x-0 w-72' : '-translate-x-full lg:translate-x-0 w-16'">
+        class="fixed md:static inset-y-0 left-0 z-50 flex flex-col overflow-x-hidden bg-gradient-to-b from-[#0d1510] to-[#080e0b] transition-all duration-300"
+        [class]="sidebarOpen() ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0 w-16'">
 
         <!-- Logo -->
         <div class="flex items-center justify-between h-16 px-6 border-b border-white/5 flex-shrink-0">
@@ -42,8 +42,8 @@ interface NavItem {
           </div>
           <button (click)="toggleSidebar()" class="text-dark-400 hover:text-white" aria-label="Toggle sidebar">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" class="lg:hidden" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6l-6 6 6 6" class="hidden lg:block" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" class="md:hidden" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 6l-6 6 6 6" class="hidden md:block" />
             </svg>
           </button>
         </div>
@@ -153,9 +153,9 @@ export class AppShellComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  private isDesktop = typeof window === 'undefined' ? true : window.innerWidth >= 1024;
+  private isDesktop = typeof window === 'undefined' ? true : window.innerWidth >= 768;
 
-  sidebarOpen = signal(this.isDesktop);
+  sidebarOpen = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1024);
   user = this.auth.user;
 
   ngOnInit(): void {
@@ -167,11 +167,11 @@ export class AppShellComponent implements OnInit, OnDestroy {
   }
 
   private handleResize = (): void => {
-    const desktop = window.innerWidth >= 1024;
+    const desktop = window.innerWidth >= 768;
 
     if (desktop !== this.isDesktop) {
       this.isDesktop = desktop;
-      this.sidebarOpen.set(desktop);
+      this.sidebarOpen.set(window.innerWidth >= 1024);
     }
   };
 
