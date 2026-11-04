@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { ShopOrder, ShopSupplier } from '../models/retailer-orders.models';
+import { readStoredSession } from './auth.storage';
 
 /**
  * Purchase orders and suppliers for the signed-in shop.
@@ -22,6 +23,7 @@ export class RetailerOrdersService {
   private _loaded = signal(false);
   private _error = signal<string | null>(null);
   private loadingSince = 0;
+  private ownerId: string | null = null;
 
   readonly orders = this._orders.asReadonly();
   readonly suppliers = this._suppliers.asReadonly();
@@ -62,6 +64,17 @@ export class RetailerOrdersService {
 
   /** Loads both lists once; pass true to force a refresh. */
   load(force = false): void {
+    // A different account must never inherit the previous user's cached rows.
+    const owner = readStoredSession()?.roleUserId ?? null;
+    if (owner !== this.ownerId) {
+      this.ownerId = owner;
+      this._orders.set([]);
+        this._suppliers.set([]);
+        this._loaded.set(false);
+        this._error.set(null);
+      this._loading.set(false);
+    }
+
     // A request aborted by a navigation can leave the loading flag set forever.
     // Treat a stale flag as not loading so Refresh always recovers.
     const stale = this._loading() && Date.now() - this.loadingSince > 10000;

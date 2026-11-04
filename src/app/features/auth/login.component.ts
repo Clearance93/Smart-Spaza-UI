@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AuthService,
@@ -233,7 +233,15 @@ interface RoleOption {
 })
 export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
-  private router = inject(Router);
+  /**
+   * Enters a portal with a full document load. A plain router navigation would keep
+   * the previous account's cached orders/deliveries alive in root services, which
+   * leaks one user's data into the next user's screen.
+   */
+  private enterPortal(route: string): void {
+    const target = new URL(route.replace(/^\/+/, ''), document.baseURI).toString();
+    window.location.assign(target);
+  }
   private route = inject(ActivatedRoute);
 
   mode = signal<Mode>('login');
@@ -264,7 +272,7 @@ export class LoginComponent implements OnInit {
     }
 
     const user = this.auth.user();
-    if (user) this.router.navigate([this.auth.homeRoute(user.role)]);
+    if (user) this.enterPortal(this.auth.homeRoute(user.role));
   }
 
   setMode(mode: Mode): void {
@@ -294,7 +302,7 @@ export class LoginComponent implements OnInit {
     this.auth.login(this.email(), this.password()).subscribe({
       next: (user) => {
         this.loading.set(false);
-        this.router.navigate([this.auth.homeRoute(user.role)]);
+        this.enterPortal(this.auth.homeRoute(user.role));
       },
       error: (err) => {
         this.loading.set(false);

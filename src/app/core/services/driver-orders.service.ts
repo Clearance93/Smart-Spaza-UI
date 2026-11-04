@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, finalize, switchMap, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import type { SupplierOrder } from '../models/supplier.models';
+import { readStoredSession } from './auth.storage';
 
 /**
  * Deliveries assigned to the signed-in driver.
@@ -21,6 +22,7 @@ export class DriverOrdersService {
   private _loaded = signal(false);
   private _error = signal<string | null>(null);
   private loadingSince = 0;
+  private ownerId: string | null = null;
   private _actingId = signal<string | null>(null);
 
   readonly orders = this._orders.asReadonly();
@@ -64,6 +66,16 @@ export class DriverOrdersService {
   );
 
   load(force = false): void {
+    // A different account must never inherit the previous user's cached rows.
+    const owner = readStoredSession()?.roleUserId ?? null;
+    if (owner !== this.ownerId) {
+      this.ownerId = owner;
+      this._orders.set([]);
+        this._loaded.set(false);
+        this._error.set(null);
+      this._loading.set(false);
+    }
+
     // A request aborted by a navigation can leave the loading flag set forever.
     // Treat a stale flag as not loading so Refresh always recovers.
     const stale = this._loading() && Date.now() - this.loadingSince > 10000;

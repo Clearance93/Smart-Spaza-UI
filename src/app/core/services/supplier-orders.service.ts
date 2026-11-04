@@ -7,6 +7,7 @@ import type {
   SupplierOrder,
   SupplierRetailer,
 } from '../models/supplier.models';
+import { readStoredSession } from './auth.storage';
 
 /**
  * Deliveries dispatched by the signed-in supplier.
@@ -25,6 +26,7 @@ export class SupplierOrdersService {
   private _loaded = signal(false);
   private _error = signal<string | null>(null);
   private loadingSince = 0;
+  private ownerId: string | null = null;
 
   readonly orders = this._orders.asReadonly();
   readonly loading = this._loading.asReadonly();
@@ -137,6 +139,16 @@ export class SupplierOrdersService {
   });
 
   load(force = false): void {
+    // A different account must never inherit the previous user's cached rows.
+    const owner = readStoredSession()?.roleUserId ?? null;
+    if (owner !== this.ownerId) {
+      this.ownerId = owner;
+      this._orders.set([]);
+        this._loaded.set(false);
+        this._error.set(null);
+      this._loading.set(false);
+    }
+
     // A request aborted by a navigation can leave the loading flag set forever.
     // Treat a stale flag as not loading so Refresh always recovers.
     const stale = this._loading() && Date.now() - this.loadingSince > 10000;
