@@ -254,6 +254,30 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
             </div>
           </div>
 
+          <div class="mt-4 rounded-2xl border border-dark-800 bg-dark-950 p-5 text-white">
+            <div class="flex flex-col sm:flex-row items-center gap-5">
+              <img src="downloads/scanner-qr.png" alt="QR code to download the Smart Spaza Android scanner"
+                class="h-28 w-28 flex-shrink-0 rounded-xl bg-white p-2" />
+              <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-primary-300">Android scanner</p>
+                <h2 class="text-lg font-bold">Scan with your phone camera</h2>
+                <p class="mt-1 text-sm text-dark-300">
+                  Browsers only open the camera on secure (HTTPS) pages. Install the Smart Spaza Scanner app to use
+                  the phone's own camera — same sign-in, same catalogue, same till.
+                </p>
+                <div class="mt-3 flex flex-wrap items-center gap-3">
+                  <a href="downloads/smartspaza-scanner.apk" download
+                    class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700">
+                    ⬇ Download the app (23 MB)
+                  </a>
+                  <span class="text-xs text-dark-400">
+                    Scan the QR with a phone, then allow "Install unknown apps" when Android asks.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           @if (lastScanned(); as item) {
             <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary-200 bg-primary-50 px-5 py-4">
               <div class="min-w-0">
