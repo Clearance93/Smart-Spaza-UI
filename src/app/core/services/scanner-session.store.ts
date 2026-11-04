@@ -28,10 +28,12 @@ export class ScannerSessionStore {
   }
 
   isOwnSession(): boolean {
-    // Only a real scanner sign-in counts as "own". A store that has never been
-    // initialised borrows the platform session, so scanner requests must fall
-    // through to the platform token/refresh flow.
-    return this.current()?.source === 'own';
+    // Inside the platform app the platform session always wins, so scanner
+    // requests must use the platform token (and its refresh flow) rather than a
+    // possibly stale scanner-only sign-in.
+    if (readStoredSession()) return false;
+
+    return this._session()?.source === 'own';
   }
 
   getRoleUserId(): string | null {
@@ -51,25 +53,23 @@ export class ScannerSessionStore {
   }
 
   /**
-   * The scanner session, falling back to the platform login. The fallback is
-   * resolved on every read rather than once at construction, so signing in on
-   * the dashboard immediately enables the scanner without a page reload.
+   * The scanner session, falling back to the platform login. The platform session
+   * always wins inside the app so a stale scanner sign-in can never shadow it.
    */
   private current(): ScannerSession | null {
-    const session = this._session();
-    if (session) return session;
-
     const auth = readStoredSession();
-    if (!auth) return null;
+    if (auth) {
+      return {
+        token: auth.token,
+        email: auth.email,
+        roleUserId: auth.roleUserId,
+        roles: auth.roles,
+        refreshToken: auth.refreshToken,
+        source: 'app',
+      };
+    }
 
-    return {
-      token: auth.token,
-      email: auth.email,
-      roleUserId: auth.roleUserId,
-      roles: auth.roles,
-      refreshToken: auth.refreshToken,
-      source: 'app',
-    };
+    return this._session();
   }
 
   save(session: ScannerSession): void {

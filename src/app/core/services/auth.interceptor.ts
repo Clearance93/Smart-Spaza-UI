@@ -12,6 +12,25 @@ import {
 } from './auth.storage';
 
 const SCANNER_REQUEST_HEADER = 'X-Scanner-Request';
+const SCANNER_STORAGE_KEY = 'smart_spaza_scanner_session';
+
+/** True when the access token is missing its expiry or is within a minute of it. */
+function tokenNeedsRefresh(token: string): boolean {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return true;
+
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const claims = JSON.parse(atob(padded)) as { exp?: number };
+
+    if (!claims.exp) return true;
+
+    return claims.exp * 1000 <= Date.now() + 60_000;
+  } catch {
+    return true;
+  }
+}
 
 let refreshInFlight$: Observable<AuthSession> | null = null;
 
@@ -60,6 +79,29 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = session.token;
   const authorized = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
 
+  // Refresh before sending when the access token has expired or is about to.
+  // This avoids a burst of 401s and keeps long-open dashboards usable.
+  if (tokenNeedsRefresh(token)) {
+    if (!session.refreshToken) {
+      return signOutAndFail(router, new HttpErrorResponse({ status: 401 }));
+    }
+
+    return refreshSession(http, session).pipe(
+      switchMap((refreshed) =>
+        next(req.clone({ setHeaders: { Authorization: `Bearer ${refreshed.token}` } })),
+      ),
+      catchError((error: unknown) => {
+        // Another tab may have rotated the refresh token first; use its token.
+        const latest = readStoredSession();
+        if (latest?.token && latest.token !== token && !tokenNeedsRefresh(latest.token)) {
+          return next(req.clone({ setHeaders: { Authorization: `Bearer ${latest.token}` } }));
+        }
+
+        return signOutAndFail(router, error);
+      }),
+    );
+  }
+
   return next(authorized).pipe(
     catchError((error: unknown) => {
       if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
@@ -88,7 +130,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function signOutAndFail(router: Router, error: unknown) {
+  const status = error instanceof HttpErrorResponse ? error.status : 0;
+
+  // A network blip or an API outage is not the same as an invalid session.
+  // Keep the user signed in and let the caller surface the error.
+  if (status === 0 || status >= 500) {
+    return throwError(() => error);
+  }
+
   writeStoredSession(null);
+
+  try {
+    localStorage.removeItem(SCANNER_STORAGE_KEY);
+  } catch {
+    // Storage unavailable.
+  }
 
   try {
     // Full reload so every in-memory session signal is reset, not just storage.
