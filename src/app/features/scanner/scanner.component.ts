@@ -254,6 +254,7 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
             </div>
           </div>
 
+          @if (!secureContext()) {
           <div class="mt-4 rounded-2xl border border-dark-800 bg-dark-950 p-5 text-white">
             <div class="flex flex-col sm:flex-row items-center gap-5">
               <img src="downloads/scanner-qr.png" alt="QR code to download the Smart Spaza Android scanner"
@@ -277,6 +278,7 @@ const ENGINE_LABEL: Record<DecodeEngine, string> = {
               </div>
             </div>
           </div>
+          }
 
           @if (lastScanned(); as item) {
             <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary-200 bg-primary-50 px-5 py-4">
