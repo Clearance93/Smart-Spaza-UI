@@ -20,31 +20,56 @@ export class ScannerSessionStore {
   session = this._session.asReadonly();
 
   getToken(): string | null {
-    return this._session()?.token ?? null;
+    return this.current()?.token ?? null;
   }
 
   getRefreshToken(): string | null {
-    return this._session()?.refreshToken ?? null;
+    return this.current()?.refreshToken ?? null;
   }
 
   isOwnSession(): boolean {
-    return this._session()?.source !== 'app';
+    // Only a real scanner sign-in counts as "own". A store that has never been
+    // initialised borrows the platform session, so scanner requests must fall
+    // through to the platform token/refresh flow.
+    return this.current()?.source === 'own';
   }
 
   getRoleUserId(): string | null {
-    return this._session()?.roleUserId ?? null;
+    return this.current()?.roleUserId ?? null;
   }
 
   getEmail(): string | null {
-    return this._session()?.email ?? null;
+    return this.current()?.email ?? null;
   }
 
   getRoles(): string[] {
-    return this._session()?.roles ?? [];
+    return this.current()?.roles ?? [];
   }
 
   isLoggedIn(): boolean {
-    return !!this._session()?.token;
+    return !!this.current()?.token;
+  }
+
+  /**
+   * The scanner session, falling back to the platform login. The fallback is
+   * resolved on every read rather than once at construction, so signing in on
+   * the dashboard immediately enables the scanner without a page reload.
+   */
+  private current(): ScannerSession | null {
+    const session = this._session();
+    if (session) return session;
+
+    const auth = readStoredSession();
+    if (!auth) return null;
+
+    return {
+      token: auth.token,
+      email: auth.email,
+      roleUserId: auth.roleUserId,
+      roles: auth.roles,
+      refreshToken: auth.refreshToken,
+      source: 'app',
+    };
   }
 
   save(session: ScannerSession): void {
