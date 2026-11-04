@@ -25,6 +25,60 @@ export const routes: Routes = [
           import('./features/dashboard/live-dashboard.component').then((m) => m.LiveDashboardComponent),
       },
       {
+        path: 'orders',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-orders.component').then(
+            (m) => m.RetailerOrdersComponent,
+          ),
+      },
+      {
+        path: 'tracking',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-tracking.component').then(
+            (m) => m.RetailerTrackingComponent,
+          ),
+      },
+      {
+        path: 'suppliers',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-suppliers.component').then(
+            (m) => m.RetailerSuppliersComponent,
+          ),
+      },
+      {
+        path: 'analytics',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-analytics.component').then(
+            (m) => m.RetailerAnalyticsComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-notifications.component').then(
+            (m) => m.RetailerNotificationsComponent,
+          ),
+      },
+      {
+        path: 'settings',
+        canActivate: [roleGuard],
+        data: { roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
+        loadComponent: () =>
+          import('./features/retailer-portal/retailer-settings.component').then(
+            (m) => m.RetailerSettingsComponent,
+          ),
+      },
+      {
         path: 'inventory',
         canActivate: [roleGuard],
         data: { roles: ['RETAILER', 'SUPPLIER'] },

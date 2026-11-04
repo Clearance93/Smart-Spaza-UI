@@ -3,6 +3,8 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ScannerApiService } from '../../core/services/scanner-api.service';
+import { RetailerOrdersService } from '../../core/services/retailer-orders.service';
+import { ORDER_STATUS_LABEL, ORDER_STATUS_STYLES } from '../../core/models/retailer-orders.models';
 import type { ScannedProduct } from '../../core/models/scanner.models';
 
 /**
@@ -67,6 +69,64 @@ import type { ScannedProduct } from '../../core/models/scanner.models';
           <p class="mt-1 text-xs text-dark-400">At selling price</p>
         </div>
       </div>
+
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-6">
+        <a routerLink="/orders"
+          class="rounded-2xl border border-dark-100 bg-white p-5 card-shadow transition-colors hover:border-primary-200">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-dark-500">Orders</p>
+          <p class="mt-1.5 text-2xl font-bold text-dark-900">{{ orders.orders().length }}</p>
+          <p class="mt-1 text-xs text-dark-400">{{ orders.inTransitOrders().length }} in transit</p>
+        </a>
+        <a routerLink="/tracking"
+          class="rounded-2xl border border-dark-100 bg-white p-5 card-shadow transition-colors hover:border-primary-200">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-dark-500">Active deliveries</p>
+          <p class="mt-1.5 text-2xl font-bold text-indigo-600">{{ orders.activeOrders().length }}</p>
+          <p class="mt-1 text-xs text-dark-400">On the way to you</p>
+        </a>
+        <a routerLink="/suppliers"
+          class="rounded-2xl border border-dark-100 bg-white p-5 card-shadow transition-colors hover:border-primary-200">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-dark-500">Suppliers</p>
+          <p class="mt-1.5 text-2xl font-bold text-dark-900">{{ orders.suppliers().length }}</p>
+          <p class="mt-1 text-xs text-dark-400">Stocking your catalogue</p>
+        </a>
+        <a routerLink="/notifications"
+          class="rounded-2xl border border-dark-100 bg-white p-5 card-shadow transition-colors hover:border-primary-200">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-dark-500">Needs attention</p>
+          <p class="mt-1.5 text-2xl font-bold text-amber-600">{{ lowStock().length }}</p>
+          <p class="mt-1 text-xs text-dark-400">Low stock alerts</p>
+        </a>
+      </div>
+
+      @if (orders.orders().length > 0) {
+        <div class="mb-6 rounded-2xl border border-dark-100 bg-white card-shadow overflow-hidden">
+          <div class="flex items-center justify-between border-b border-dark-100 px-5 py-4">
+            <div>
+              <h2 class="text-sm font-semibold text-dark-900">Recent orders</h2>
+              <p class="text-xs text-dark-400">Live delivery status from your suppliers</p>
+            </div>
+            <a routerLink="/orders" class="text-xs font-semibold text-primary-700 hover:text-primary-800">
+              View all →
+            </a>
+          </div>
+          <div class="divide-y divide-dark-100">
+            @for (order of recentOrders(); track order.deliveryId) {
+              <a routerLink="/orders" class="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-dark-50/60">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-dark-900">
+                    #{{ order.deliveryNumber }} · {{ order.supplierName || 'Supplier' }}
+                  </p>
+                  <p class="text-xs text-dark-400">
+                    {{ order.items.length }} line(s) · ETA {{ order.estimatedArrival || order.scheduledTime || '—' }}
+                  </p>
+                </div>
+                <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold" [class]="statusStyle(order.status)">
+                  {{ statusLabel(order.status) }}
+                </span>
+              </a>
+            }
+          </div>
+        </div>
+      }
 
       <div class="rounded-2xl border border-dark-100 bg-white card-shadow overflow-hidden">
         <div class="flex items-center justify-between border-b border-dark-100 px-5 py-4">
@@ -136,11 +196,15 @@ export class LiveDashboardComponent implements OnInit {
   private api = inject(ScannerApiService);
   private auth = inject(AuthService);
 
+  orders = inject(RetailerOrdersService);
+
   products = signal<ScannedProduct[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
 
   portalLabel = computed(() => this.auth.roleLabel() || 'Business');
+
+  recentOrders = computed(() => this.orders.orders().slice(0, 3));
 
   totalUnits = computed(() => this.products().reduce((sum, p) => sum + p.stockQuantity, 0));
   totalValue = computed(() =>
@@ -150,6 +214,15 @@ export class LiveDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.orders.load();
+  }
+
+  statusLabel(status: string): string {
+    return ORDER_STATUS_LABEL[status] ?? status;
+  }
+
+  statusStyle(status: string): string {
+    return ORDER_STATUS_STYLES[status] ?? 'bg-dark-100 text-dark-700';
   }
 
   load(): void {

@@ -187,8 +187,9 @@ export class AppShellComponent implements OnInit, OnDestroy {
 
   notificationsRoute = computed(() => {
     const map: Record<string, string> = {
-      DRIVER: '/driver/notifications',
+      DRIVER: '/notifications',
       RETAILER: '/notifications',
+      SUPPLIER: '/notifications',
     };
     return map[this.auth.userRole() ?? ''] ?? null;
   });
@@ -210,8 +211,14 @@ export class AppShellComponent implements OnInit, OnDestroy {
 
   private allNavItems: NavItem[] = [
     { label: 'Dashboard', icon: '🏠', route: '/dashboard', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
+    { label: 'Orders', icon: '🧾', route: '/orders', roles: ['RETAILER', 'SUPPLIER'] },
+    { label: 'Live Tracking', icon: '🛰️', route: '/tracking', roles: ['RETAILER'] },
     { label: 'Inventory', icon: '📦', route: '/inventory', roles: ['RETAILER', 'SUPPLIER'] },
+    { label: 'Suppliers', icon: '🏭', route: '/suppliers', roles: ['RETAILER', 'SUPPLIER'] },
+    { label: 'Analytics', icon: '📊', route: '/analytics', roles: ['RETAILER', 'SUPPLIER'] },
+    { label: 'Notifications', icon: '🔔', route: '/notifications', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
     { label: 'Scan Code', icon: '📷', route: '/scanner', roles: ['RETAILER', 'SUPPLIER'] },
+    { label: 'Settings', icon: '⚙️', route: '/settings', roles: ['RETAILER', 'SUPPLIER', 'DRIVER'] },
   ];
 
   visibleNavItems = computed(() => {
