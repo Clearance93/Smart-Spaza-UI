@@ -70,6 +70,7 @@ import type { ScannedProduct } from '../../core/models/scanner.models';
         </div>
       </div>
 
+      @if (isRetailer()) {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-6">
         <a routerLink="/orders"
           class="rounded-2xl border border-dark-100 bg-white p-5 card-shadow transition-colors hover:border-primary-200">
@@ -126,6 +127,8 @@ import type { ScannedProduct } from '../../core/models/scanner.models';
             }
           </div>
         </div>
+      }
+
       }
 
       <div class="rounded-2xl border border-dark-100 bg-white card-shadow overflow-hidden">
@@ -198,6 +201,8 @@ export class LiveDashboardComponent implements OnInit {
 
   orders = inject(RetailerOrdersService);
 
+  isRetailer = this.auth.isRetailer;
+
   products = signal<ScannedProduct[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -214,7 +219,9 @@ export class LiveDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.orders.load();
+    if (this.isRetailer()) {
+      this.orders.load();
+    }
   }
 
   statusLabel(status: string): string {

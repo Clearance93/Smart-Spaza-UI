@@ -27,7 +27,7 @@ export const routes: Routes = [
       {
         path: 'orders',
         canActivate: [roleGuard],
-        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        data: { roles: ['RETAILER'] },
         loadComponent: () =>
           import('./features/retailer-portal/retailer-orders.component').then(
             (m) => m.RetailerOrdersComponent,
@@ -45,7 +45,7 @@ export const routes: Routes = [
       {
         path: 'suppliers',
         canActivate: [roleGuard],
-        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        data: { roles: ['RETAILER'] },
         loadComponent: () =>
           import('./features/retailer-portal/retailer-suppliers.component').then(
             (m) => m.RetailerSuppliersComponent,
@@ -54,7 +54,7 @@ export const routes: Routes = [
       {
         path: 'analytics',
         canActivate: [roleGuard],
-        data: { roles: ['RETAILER', 'SUPPLIER'] },
+        data: { roles: ['RETAILER'] },
         loadComponent: () =>
           import('./features/retailer-portal/retailer-analytics.component').then(
             (m) => m.RetailerAnalyticsComponent,
